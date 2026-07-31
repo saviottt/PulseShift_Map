@@ -1,0 +1,1989 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>PulseMap — Global Anonymous Thought & Location Mapper</title>
+    
+    <!-- Meta & SEO -->
+    <meta name="description" content="Share thoughts anonymously across the globe and search content visually with glowing green dots on a real-time world map.">
+    <meta name="theme-color" content="#090d16">
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+
+    <style>
+        :root {
+            --bg-dark: #090d16;
+            --bg-card: rgba(18, 26, 43, 0.75);
+            --bg-card-border: rgba(255, 255, 255, 0.08);
+            --primary-green: #00ff88;
+            --primary-green-glow: rgba(0, 255, 136, 0.35);
+            --primary-green-dark: #00b359;
+            --accent-blue: #3b82f6;
+            --accent-purple: #8b5cf6;
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            --font-heading: 'Outfit', sans-serif;
+            --font-body: 'Inter', sans-serif;
+            --radius-lg: 18px;
+            --radius-md: 12px;
+            --radius-sm: 8px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            background-image: 
+                linear-gradient(180deg, rgba(9, 13, 22, 0.78) 0%, rgba(9, 13, 22, 0.88) 100%),
+                url('image.png');
+            background-size: cover;
+            background-position: center;
+            background-attachment: fixed;
+            background-repeat: no-repeat;
+            color: var(--text-main);
+            font-family: var(--font-body);
+            min-height: 100vh;
+            overflow-x: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Header Navigation */
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            background: rgba(9, 13, 22, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--bg-card-border);
+            padding: 1rem 2rem;
+        }
+
+        .header-container {
+            max-width: 1300px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .brand {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            text-decoration: none;
+        }
+
+        .brand-logo {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            background: linear-gradient(135deg, rgba(0, 255, 136, 0.2), rgba(59, 130, 246, 0.2));
+            border: 1px solid var(--primary-green);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary-green);
+            font-size: 1.25rem;
+            box-shadow: 0 0 15px var(--primary-green-glow);
+        }
+
+        .brand-title {
+            font-family: var(--font-heading);
+            font-size: 1.4rem;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            color: #ffffff;
+        }
+
+        .brand-title span {
+            color: var(--primary-green);
+        }
+
+        /* Top Central Switcher Tabs */
+        .mode-switcher {
+            display: flex;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 4px;
+            border-radius: 40px;
+            border: 1px solid var(--bg-card-border);
+            gap: 4px;
+        }
+
+        .switch-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            padding: 0.6rem 1.4rem;
+            border-radius: 30px;
+            font-family: var(--font-body);
+            font-size: 0.92rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .switch-btn:hover {
+            color: #fff;
+        }
+
+        .switch-btn.active {
+            background: linear-gradient(135deg, var(--primary-green), var(--primary-green-dark));
+            color: #051a10;
+            box-shadow: 0 4px 15px var(--primary-green-glow);
+        }
+
+        .stats-badge {
+            background: rgba(0, 255, 136, 0.1);
+            border: 1px solid rgba(0, 255, 136, 0.2);
+            color: var(--primary-green);
+            padding: 0.35rem 0.85rem;
+            border-radius: 20px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        /* Main Workspace Container */
+        main {
+            flex: 1;
+            max-width: 1300px;
+            width: 100%;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        /* Center Hero Navigation / Quick Select Cards */
+        .center-options-hero {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        @media (max-width: 850px) {
+            .center-options-hero {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .option-card {
+            background: var(--bg-card);
+            border: 1px solid var(--bg-card-border);
+            backdrop-filter: blur(12px);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem 1.75rem;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            gap: 1.25rem;
+        }
+
+        .option-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 4px;
+            height: 100%;
+            background: transparent;
+            transition: background 0.3s ease;
+        }
+
+        .option-card:hover {
+            transform: translateY(-3px);
+            border-color: rgba(0, 255, 136, 0.3);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+        }
+
+        .option-card.active-card {
+            border-color: var(--primary-green);
+            background: rgba(18, 32, 43, 0.85);
+        }
+
+        .option-card.active-card::before {
+            background: var(--primary-green);
+        }
+
+        .option-icon {
+            width: 54px;
+            height: 54px;
+            min-width: 54px;
+            border-radius: 16px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--bg-card-border);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.4rem;
+            color: var(--primary-green);
+            transition: all 0.3s ease;
+        }
+
+        .option-card:hover .option-icon {
+            background: rgba(0, 255, 136, 0.15);
+            color: var(--primary-green);
+            box-shadow: 0 0 15px var(--primary-green-glow);
+        }
+
+        .option-info h3 {
+            font-family: var(--font-heading);
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 0.3rem;
+        }
+
+        .option-info p {
+            font-size: 0.88rem;
+            color: var(--text-muted);
+            line-height: 1.4;
+        }
+
+        /* View Panels */
+        .view-panel {
+            display: none;
+            animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .view-panel.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Post Creation Panel (Text Box + Location Picker Map) */
+        .post-creation-wrapper {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.75rem;
+            background: var(--bg-card);
+            border: 1px solid var(--bg-card-border);
+            backdrop-filter: blur(16px);
+            border-radius: var(--radius-lg);
+            padding: 2rem;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+        }
+
+        @media (max-width: 950px) {
+            .post-creation-wrapper {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .post-form-section {
+            display: flex;
+            flex-direction: column;
+            gap: 1.25rem;
+        }
+
+        .section-header h2 {
+            font-family: var(--font-heading);
+            font-size: 1.5rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            color: #fff;
+        }
+
+        .section-header p {
+            color: var(--text-muted);
+            font-size: 0.88rem;
+            margin-top: 0.25rem;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .input-label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--text-main);
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .input-label span.req {
+            color: var(--primary-green);
+        }
+
+        .author-input, .post-textarea {
+            width: 100%;
+            background: rgba(9, 13, 22, 0.7);
+            border: 1px solid var(--bg-card-border);
+            border-radius: var(--radius-md);
+            padding: 0.85rem 1rem;
+            color: #fff;
+            font-family: var(--font-body);
+            font-size: 0.95rem;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+
+        .author-input:focus, .post-textarea:focus {
+            border-color: var(--primary-green);
+            box-shadow: 0 0 12px var(--primary-green-glow);
+            background: rgba(9, 13, 22, 0.9);
+        }
+
+        .post-textarea {
+            resize: vertical;
+            min-height: 140px;
+            line-height: 1.5;
+        }
+
+        /* Tags selection */
+        .tag-selector {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .tag-chip {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--bg-card-border);
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            cursor: pointer;
+            transition: all 0.25s ease;
+        }
+
+        .tag-chip:hover {
+            border-color: rgba(255, 255, 255, 0.2);
+            color: #fff;
+        }
+
+        .tag-chip.selected {
+            background: rgba(0, 255, 136, 0.15);
+            border-color: var(--primary-green);
+            color: var(--primary-green);
+            font-weight: 600;
+        }
+
+        /* Location Picker Side */
+        .location-picker-section {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .picker-map-box {
+            width: 100%;
+            height: 280px;
+            border-radius: var(--radius-md);
+            border: 1px solid var(--bg-card-border);
+            overflow: hidden;
+            position: relative;
+        }
+
+        #picker-map {
+            width: 100%;
+            height: 100%;
+            background: #0d131f;
+        }
+
+        .location-status-bar {
+            background: rgba(9, 13, 22, 0.7);
+            border: 1px solid var(--bg-card-border);
+            border-radius: var(--radius-md);
+            padding: 0.75rem 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.85rem;
+        }
+
+        .location-info {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            color: var(--primary-green);
+            font-weight: 500;
+        }
+
+        .btn-detect {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid var(--bg-card-border);
+            color: #fff;
+            padding: 0.4rem 0.85rem;
+            border-radius: var(--radius-sm);
+            font-size: 0.78rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .btn-detect:hover {
+            background: rgba(0, 255, 136, 0.15);
+            border-color: var(--primary-green);
+            color: var(--primary-green);
+        }
+
+        .quick-locations {
+            display: flex;
+            gap: 0.4rem;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+
+        .quick-locations span {
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            margin-right: 0.2rem;
+        }
+
+        .loc-preset-btn {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid var(--bg-card-border);
+            color: var(--text-muted);
+            padding: 0.25rem 0.6rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .loc-preset-btn:hover {
+            color: #fff;
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .btn-submit-post {
+            background: linear-gradient(135deg, var(--primary-green), var(--primary-green-dark));
+            border: none;
+            color: #04140c;
+            font-family: var(--font-heading);
+            font-size: 1.05rem;
+            font-weight: 700;
+            padding: 0.9rem 1.5rem;
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.6rem;
+            box-shadow: 0 4px 20px var(--primary-green-glow);
+            margin-top: 0.5rem;
+        }
+
+        .btn-submit-post:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 255, 136, 0.5);
+        }
+
+        .btn-submit-post:active {
+            transform: translateY(0);
+        }
+
+        /* Search & Map Panel */
+        .search-panel-wrapper {
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .search-bar-container {
+            background: var(--bg-card);
+            border: 1px solid var(--bg-card-border);
+            backdrop-filter: blur(16px);
+            border-radius: var(--radius-lg);
+            padding: 1.5rem 2rem;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .search-input-box {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 1.25rem;
+            color: var(--primary-green);
+            font-size: 1.2rem;
+        }
+
+        .search-input {
+            width: 100%;
+            background: rgba(9, 13, 22, 0.8);
+            border: 2px solid rgba(0, 255, 136, 0.25);
+            border-radius: 40px;
+            padding: 1rem 3.5rem 1rem 3.2rem;
+            color: #fff;
+            font-family: var(--font-body);
+            font-size: 1.05rem;
+            outline: none;
+            transition: all 0.3s ease;
+            box-shadow: 0 0 20px rgba(0, 255, 136, 0.1);
+        }
+
+        .search-input:focus {
+            border-color: var(--primary-green);
+            box-shadow: 0 0 25px var(--primary-green-glow);
+            background: rgba(9, 13, 22, 0.95);
+        }
+
+        .clear-search-btn {
+            position: absolute;
+            right: 1.25rem;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1rem;
+            cursor: pointer;
+            display: none;
+            transition: color 0.2s ease;
+        }
+
+        .clear-search-btn:hover {
+            color: #fff;
+        }
+
+        .keyword-chips-container {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            flex-wrap: wrap;
+        }
+
+        .chips-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .kw-chip {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--bg-card-border);
+            color: var(--text-main);
+            padding: 0.3rem 0.75rem;
+            border-radius: 16px;
+            font-size: 0.78rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .kw-chip:hover, .kw-chip.active-chip {
+            background: rgba(0, 255, 136, 0.15);
+            border-color: var(--primary-green);
+            color: var(--primary-green);
+        }
+
+        /* Map Container Area */
+        .world-map-wrapper {
+            background: var(--bg-card);
+            border: 1px solid var(--bg-card-border);
+            backdrop-filter: blur(16px);
+            border-radius: var(--radius-lg);
+            padding: 1.25rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            box-shadow: 0 20px 45px rgba(0, 0, 0, 0.5);
+        }
+
+        .map-header-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 0.5rem;
+        }
+
+        .map-title-info {
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+
+        .map-title-info h2 {
+            font-family: var(--font-heading);
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        .match-count-pill {
+            background: rgba(0, 255, 136, 0.15);
+            border: 1px solid var(--primary-green);
+            color: var(--primary-green);
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .map-controls {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .btn-map-control {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--bg-card-border);
+            color: var(--text-main);
+            padding: 0.4rem 0.8rem;
+            border-radius: var(--radius-sm);
+            font-size: 0.8rem;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+        }
+
+        .btn-map-control:hover {
+            background: rgba(255, 255, 255, 0.12);
+            color: #fff;
+        }
+
+        .world-map-box {
+            width: 100%;
+            height: 480px;
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            border: 1px solid var(--bg-card-border);
+            position: relative;
+        }
+
+        #world-map {
+            width: 100%;
+            height: 100%;
+            background: #090d16;
+        }
+
+        /* Custom Glowing Green Pulse Leaflet Marker CSS */
+        .green-pulse-marker {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .green-pulse-dot {
+            width: 18px;
+            height: 18px;
+            background-color: var(--primary-green);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--primary-green), 0 0 20px var(--primary-green);
+            position: relative;
+            cursor: pointer;
+            border: 2px solid #ffffff;
+        }
+
+        .green-pulse-dot::after {
+            content: '';
+            position: absolute;
+            top: -8px;
+            left: -8px;
+            right: -8px;
+            bottom: -8px;
+            border-radius: 50%;
+            border: 2px solid var(--primary-green);
+            animation: pulse-ring 1.8s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+        }
+
+        @keyframes pulse-ring {
+            0% {
+                transform: scale(0.4);
+                opacity: 0.9;
+            }
+            100% {
+                transform: scale(1.8);
+                opacity: 0;
+            }
+        }
+
+        /* Leaflet Popup Styling */
+        .leaflet-popup-content-wrapper {
+            background: rgba(13, 20, 33, 0.95) !important;
+            backdrop-filter: blur(12px);
+            border: 1px solid var(--primary-green) !important;
+            color: var(--text-main) !important;
+            border-radius: 14px !important;
+            box-shadow: 0 10px 30px rgba(0, 255, 136, 0.25) !important;
+            padding: 4px;
+        }
+
+        .leaflet-popup-tip {
+            background: rgba(13, 20, 33, 0.95) !important;
+            border: 1px solid var(--primary-green);
+        }
+
+        .popup-card {
+            padding: 0.4rem;
+            max-width: 260px;
+        }
+
+        .popup-meta {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-bottom: 0.4rem;
+            padding-bottom: 0.4rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .popup-author {
+            color: var(--primary-green);
+            font-weight: 600;
+        }
+
+        .popup-text {
+            font-size: 0.88rem;
+            line-height: 1.45;
+            color: #fff;
+            margin-bottom: 0.5rem;
+        }
+
+        .popup-text mark {
+            background: rgba(0, 255, 136, 0.3);
+            color: #fff;
+            padding: 0.1rem 0.3rem;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        .popup-location {
+            font-size: 0.76rem;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        /* Feed Results Below Map */
+        .feed-container {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .feed-header {
+            font-family: var(--font-heading);
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .posts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(290px, 1fr));
+            gap: 1.25rem;
+        }
+
+        .post-card {
+            background: var(--bg-card);
+            border: 1px solid var(--bg-card-border);
+            border-radius: var(--radius-md);
+            padding: 1.25rem;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            gap: 0.8rem;
+        }
+
+        .post-card:hover {
+            border-color: rgba(0, 255, 136, 0.4);
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .post-card-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.8rem;
+        }
+
+        .post-card-author {
+            font-weight: 600;
+            color: var(--primary-green);
+        }
+
+        .post-card-tag {
+            background: rgba(255, 255, 255, 0.05);
+            padding: 0.2rem 0.5rem;
+            border-radius: 10px;
+            font-size: 0.72rem;
+            color: var(--text-muted);
+        }
+
+        .post-card-content {
+            font-size: 0.92rem;
+            line-height: 1.5;
+            color: #e5e7eb;
+        }
+
+        .post-card-bottom {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            padding-top: 0.6rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .btn-fly-to {
+            background: rgba(0, 255, 136, 0.1);
+            border: 1px solid rgba(0, 255, 136, 0.25);
+            color: var(--primary-green);
+            padding: 0.3rem 0.6rem;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            font-size: 0.75rem;
+            font-weight: 600;
+            transition: all 0.2s ease;
+            display: flex;
+            align-items: center;
+            gap: 0.3rem;
+        }
+
+        .btn-fly-to:hover {
+            background: var(--primary-green);
+            color: #04140c;
+        }
+
+        /* Toast Notification */
+        .toast {
+            position: fixed;
+            bottom: 2rem;
+            right: 2rem;
+            background: rgba(9, 20, 15, 0.95);
+            border: 1px solid var(--primary-green);
+            color: #fff;
+            padding: 0.9rem 1.4rem;
+            border-radius: var(--radius-md);
+            box-shadow: 0 10px 30px var(--primary-green-glow);
+            backdrop-filter: blur(12px);
+            z-index: 2000;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            transform: translateY(100px);
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .toast.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+
+        .toast-icon {
+            color: var(--primary-green);
+            font-size: 1.2rem;
+        }
+
+        /* Mobile Bottom App Bar */
+        .mobile-bottom-nav {
+            display: none;
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 64px;
+            background: rgba(9, 13, 22, 0.95);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-top: 1px solid var(--bg-card-border);
+            z-index: 2000;
+            justify-content: space-around;
+            align-items: center;
+            padding-bottom: env(safe-area-inset-bottom);
+        }
+
+        .mobile-nav-item {
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 3px;
+            font-size: 0.72rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            flex: 1;
+            padding: 6px 0;
+        }
+
+        .mobile-nav-item i {
+            font-size: 1.25rem;
+        }
+
+        .mobile-nav-item.active {
+            color: var(--primary-green);
+        }
+
+        .mobile-nav-item.fab-item .fab-icon {
+            width: 46px;
+            height: 46px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary-green), var(--primary-green-dark));
+            color: #04140c;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: -20px;
+            box-shadow: 0 4px 15px var(--primary-green-glow);
+            border: 3px solid var(--bg-dark);
+            transition: transform 0.2s ease;
+        }
+
+        .mobile-nav-item.fab-item:active .fab-icon {
+            transform: scale(0.92);
+        }
+
+        .mobile-nav-item.fab-item i {
+            font-size: 1.2rem;
+        }
+
+
+
+        /* Responsive Mobile Breakpoints */
+        @media (max-width: 768px) {
+            body {
+                padding-bottom: 70px;
+            }
+
+            header {
+                padding: 0.75rem 1rem;
+            }
+
+            .header-container {
+                justify-content: space-between;
+            }
+
+            .mode-switcher {
+                display: none; /* Replaced by bottom nav on mobile */
+            }
+
+            .mobile-bottom-nav {
+                display: flex;
+            }
+
+            main {
+                padding: 1rem 0.85rem 5rem 0.85rem;
+                gap: 1.25rem;
+            }
+
+            .center-options-hero {
+                grid-template-columns: 1fr;
+                gap: 0.85rem;
+            }
+
+            .option-card {
+                padding: 1.1rem 1.25rem;
+                gap: 1rem;
+            }
+
+            .option-icon {
+                width: 44px;
+                height: 44px;
+                min-width: 44px;
+                font-size: 1.2rem;
+            }
+
+            .option-info h3 {
+                font-size: 1.05rem;
+            }
+
+            .option-info p {
+                font-size: 0.8rem;
+            }
+
+            .post-creation-wrapper {
+                grid-template-columns: 1fr;
+                padding: 1.25rem;
+                gap: 1.5rem;
+            }
+
+            /* Prevent iOS Safari auto-zoom on input focus */
+            .author-input, .post-textarea, .search-input {
+                font-size: 16px !important;
+            }
+
+            .search-bar-container {
+                padding: 1.1rem;
+            }
+
+            .search-input {
+                padding: 0.85rem 3rem 0.85rem 2.8rem;
+            }
+
+            .keyword-chips-container, .quick-locations {
+                overflow-x: auto;
+                white-space: nowrap;
+                flex-wrap: nowrap;
+                padding-bottom: 4px;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none;
+            }
+
+            .keyword-chips-container::-webkit-scrollbar, .quick-locations::-webkit-scrollbar {
+                display: none;
+            }
+
+            .kw-chip, .loc-preset-btn {
+                flex-shrink: 0;
+            }
+
+            .world-map-wrapper {
+                padding: 0.85rem;
+            }
+
+            .world-map-box {
+                height: 380px;
+            }
+
+            .picker-map-box {
+                height: 240px;
+            }
+
+            .posts-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .toast {
+                left: 1rem;
+                right: 1rem;
+                bottom: 5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header Navigation -->
+    <header>
+        <div class="header-container">
+            <a href="#" class="brand">
+                <div class="brand-logo">
+                    <i class="fa-solid fa-location-dot"></i>
+                </div>
+                <div class="brand-title">Pulse<span>Map</span></div>
+            </a>
+
+            <!-- Mode Switcher Pill Tabs -->
+            <div class="mode-switcher">
+                <button class="switch-btn active" id="tab-search" onclick="switchView('search')">
+                    <i class="fa-solid fa-magnifying-glass"></i> Search & World Map
+                </button>
+                <button class="switch-btn" id="tab-post" onclick="switchView('post')">
+                    <i class="fa-solid fa-pen-to-square"></i> Create Pulse (Post)
+                </button>
+            </div>
+
+            <div class="stats-badge" id="total-pulses-badge">
+                <i class="fa-solid fa-bolt"></i> <span id="pulse-count">0</span> Global Pulses
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Workspace -->
+    <main>
+
+
+
+        <!-- Center Options Feature Hero Banner -->
+        <section class="center-options-hero">
+            <div class="option-card active-card" id="card-search-option" onclick="switchView('search')">
+                <div class="option-icon">
+                    <i class="fa-solid fa-globe"></i>
+                </div>
+                <div class="option-info">
+                    <h3>Option 1: Search & Green Dot Map</h3>
+                    <p>Search any word or keyword to instantly locate user posts matching your query displayed as glowing green dots across the world map.</p>
+                </div>
+            </div>
+
+            <div class="option-card" id="card-post-option" onclick="switchView('post')">
+                <div class="option-icon">
+                    <i class="fa-solid fa-map-pin"></i>
+                </div>
+                <div class="option-info">
+                    <h3>Option 2: Post Text + Location Picker</h3>
+                    <p>Share a thought or post anonymously with zero authentication. Pin your exact location on the interactive map and broadcast to the world.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- VIEW PANEL 1: Search & Green Dot World Map -->
+        <section class="view-panel active" id="view-search">
+            <div class="search-panel-wrapper">
+                
+                <!-- Central Search Bar Component -->
+                <div class="search-bar-container">
+                    <div class="search-input-box">
+                        <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                        <input type="text" id="search-input" class="search-input" placeholder="Search keywords in global posts... (e.g. coffee, code, music, food, tech, sunset)" autocomplete="off">
+                        <button class="clear-search-btn" id="clear-search-btn" onclick="clearSearch()">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+
+                    <!-- Quick Tag Chips -->
+                    <div class="keyword-chips-container">
+                        <span class="chips-label">Popular queries:</span>
+                        <button class="kw-chip" onclick="setSearchQuery('coffee')">☕ coffee</button>
+                        <button class="kw-chip" onclick="setSearchQuery('code')">💻 code</button>
+                        <button class="kw-chip" onclick="setSearchQuery('music')">🎵 music</button>
+                        <button class="kw-chip" onclick="setSearchQuery('peace')">🕊️ peace</button>
+                        <button class="kw-chip" onclick="setSearchQuery('tech')">🚀 tech</button>
+                        <button class="kw-chip" onclick="setSearchQuery('sunset')">🌅 sunset</button>
+                        <button class="kw-chip" onclick="setSearchQuery('')">✨ Show All</button>
+                    </div>
+                </div>
+
+                <!-- World Map Component -->
+                <div class="world-map-wrapper">
+                    <div class="map-header-bar">
+                        <div class="map-title-info">
+                            <h2><i class="fa-solid fa-earth-americas" style="color: var(--primary-green);"></i> Interactive World Map</h2>
+                            <span class="match-count-pill" id="match-count-indicator">Showing all locations</span>
+                        </div>
+                        <div class="map-controls">
+                            <button class="btn-map-control" onclick="resetWorldMapZoom()">
+                                <i class="fa-solid fa-compress"></i> Reset View
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="world-map-box">
+                        <div id="world-map"></div>
+                    </div>
+                </div>
+
+                <!-- Synchronized Matching Feed Below Map -->
+                <div class="feed-container">
+                    <div class="feed-header">
+                        <span><i class="fa-solid fa-list-ul" style="color: var(--primary-green);"></i> Matching Global Pulses</span>
+                        <span id="feed-count" style="font-size: 0.85rem; color: var(--text-muted);">0 posts</span>
+                    </div>
+                    <div class="posts-grid" id="posts-grid">
+                        <!-- Dynamic Post Cards Render Here -->
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+        <!-- VIEW PANEL 2: Text Box Post Creation + Location Picker Map -->
+        <section class="view-panel" id="view-post">
+            <div class="post-creation-wrapper">
+                
+                <!-- Left: Post Form -->
+                <div class="post-form-section">
+                    <div class="section-header">
+                        <h2><i class="fa-solid fa-pen-to-square" style="color: var(--primary-green);"></i> Create a Pulse</h2>
+                        <p>Write your message below. No registration or login required.</p>
+                    </div>
+
+                    <div class="input-group">
+                        <label class="input-label" for="author-name">
+                            <span>Nickname / Alias</span>
+                            <span style="color: var(--text-muted);">Optional</span>
+                        </label>
+                        <input type="text" id="author-name" class="author-input" placeholder="e.g. CyberVoyager, TokyoExplorer, Anonymous" maxlength="30">
+                    </div>
+
+                    <div class="input-group">
+                        <label class="input-label" for="post-text">
+                            <span>Your Message / Post <span class="req">*</span></span>
+                            <span id="char-count">0 / 280</span>
+                        </label>
+                        <textarea id="post-text" class="post-textarea" placeholder="What's happening in your part of the world? Share a thought, recommendation, or status update..." maxlength="280"></textarea>
+                    </div>
+
+                    <!-- Category / Mood Selector -->
+                    <div class="input-group">
+                        <label class="input-label">Select Category</label>
+                        <div class="tag-selector" id="tag-selector">
+                            <span class="tag-chip selected" data-tag="General">💭 General</span>
+                            <span class="tag-chip" data-tag="Tech">💻 Tech & Code</span>
+                            <span class="tag-chip" data-tag="Life">☕ Daily Life</span>
+                            <span class="tag-chip" data-tag="Music">🎵 Music</span>
+                            <span class="tag-chip" data-tag="Food">🍜 Food</span>
+                            <span class="tag-chip" data-tag="Event">🎉 Local Event</span>
+                        </div>
+                    </div>
+
+                    <button class="btn-submit-post" onclick="submitPulsePost()">
+                        <i class="fa-solid fa-paper-plane"></i> Publish Pulse to Map
+                    </button>
+                </div>
+
+                <!-- Right: Location Picker Map -->
+                <div class="location-picker-section">
+                    <div class="section-header">
+                        <h2><i class="fa-solid fa-location-crosshairs" style="color: var(--primary-green);"></i> Location Picker</h2>
+                        <p>Click anywhere on the map below or use auto-detect to select your coordinates.</p>
+                    </div>
+
+                    <div class="picker-map-box">
+                        <div id="picker-map"></div>
+                    </div>
+
+                    <!-- Selected Location Bar -->
+                    <div class="location-status-bar">
+                        <div class="location-info">
+                            <i class="fa-solid fa-location-dot"></i>
+                            <span id="selected-loc-display">Location: Pick on map below</span>
+                        </div>
+                        <button class="btn-detect" onclick="detectUserGeoLocation()">
+                            <i class="fa-solid fa-location-arrow"></i> My Location
+                        </button>
+                    </div>
+
+                    <!-- Quick Preset Cities -->
+                    <div class="quick-locations">
+                        <span>Presets:</span>
+                        <button class="loc-preset-btn" onclick="selectPresetLoc('Tokyo', 35.6762, 139.6503)">Tokyo</button>
+                        <button class="loc-preset-btn" onclick="selectPresetLoc('New York', 40.7128, -74.0060)">New York</button>
+                        <button class="loc-preset-btn" onclick="selectPresetLoc('London', 51.5074, -0.1278)">London</button>
+                        <button class="loc-preset-btn" onclick="selectPresetLoc('Paris', 48.8566, 2.3522)">Paris</button>
+                        <button class="loc-preset-btn" onclick="selectPresetLoc('Sydney', -33.8688, 151.2093)">Sydney</button>
+                        <button class="loc-preset-btn" onclick="selectPresetLoc('Mumbai', 19.0760, 72.8777)">Mumbai</button>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Toast Notification Popup -->
+    <div class="toast" id="toast-notification">
+        <i class="fa-solid fa-circle-check toast-icon"></i>
+        <span id="toast-message">Pulse published successfully!</span>
+    </div>
+
+    <!-- Mobile Fixed Bottom App Bar -->
+    <nav class="mobile-bottom-nav">
+        <button class="mobile-nav-item active" id="mob-nav-search" onclick="switchView('search')">
+            <i class="fa-solid fa-map-location-dot"></i>
+            <span>Search Map</span>
+        </button>
+        <button class="mobile-nav-item fab-item" id="mob-nav-post" onclick="switchView('post')">
+            <div class="fab-icon">
+                <i class="fa-solid fa-plus"></i>
+            </div>
+            <span>New Pulse</span>
+        </button>
+        <button class="mobile-nav-item" id="mob-nav-feed" onclick="scrollToFeed()">
+            <i class="fa-solid fa-list-ul"></i>
+            <span>Pulse Feed</span>
+        </button>
+    </nav>
+
+    <!-- Footer -->
+    <footer>
+        <p>PulseMap &copy; 2026 — Real-Time Anonymous Global Thought & Location Visualizer</p>
+    </footer>
+
+    <!-- Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+    <script>
+        // Application State
+        let postsData = [];
+        let worldMap = null;
+        let pickerMap = null;
+        let worldMarkers = [];
+        let selectedLocation = { lat: 35.6762, lng: 139.6503, name: "Tokyo, Japan" }; // Default initial location
+        let pickerMarker = null;
+        let activeCategoryTag = "General";
+
+        // Initial Pre-populated Seed Posts around the World
+        const seedPulses = [
+            {
+                id: "seed-1",
+                author: "CyberSamurai",
+                text: "Late night coding session with green tea in Shibuya! Building decentralized web applications. 💻☕",
+                category: "Tech",
+                lat: 35.6762,
+                lng: 139.6503,
+                locationName: "Tokyo, Japan",
+                timestamp: "10 mins ago"
+            },
+            {
+                id: "seed-2",
+                author: "ManhattanCoder",
+                text: "Grabbed the best espresso in West Village before tackling bug fixes! Coffee gives superpowers.",
+                category: "Food",
+                lat: 40.7128,
+                lng: -74.0060,
+                locationName: "New York, USA",
+                timestamp: "25 mins ago"
+            },
+            {
+                id: "seed-3",
+                author: "PixelWanderer",
+                text: "Rainy evening walk across Tower Bridge listening to lo-fi ambient music. Peace & tranquility. 🌧️🎵",
+                category: "Music",
+                lat: 51.5074,
+                lng: -0.1278,
+                locationName: "London, UK",
+                timestamp: "45 mins ago"
+            },
+            {
+                id: "seed-4",
+                author: "MonmartreArtist",
+                text: "Watching the golden sunset over Sacré-Cœur with fresh croissants. Pure magic!",
+                category: "Life",
+                lat: 48.8566,
+                lng: 2.3522,
+                locationName: "Paris, France",
+                timestamp: "1 hour ago"
+            },
+            {
+                id: "seed-5",
+                author: "OperaExplorer",
+                text: "Sunny afternoon at Sydney Harbour! Crisp ocean breeze and clear blue skies.",
+                category: "Life",
+                lat: -33.8688,
+                lng: 151.2093,
+                locationName: "Sydney, Australia",
+                timestamp: "2 hours ago"
+            },
+            {
+                id: "seed-6",
+                author: "MarineDriveVibes",
+                text: "Evening tea at Marine Drive with cool breeze from the Arabian Sea. Best city ever!",
+                category: "Food",
+                lat: 19.0760,
+                lng: 72.8777,
+                locationName: "Mumbai, India",
+                timestamp: "2 hours ago"
+            },
+            {
+                id: "seed-7",
+                author: "CopacabanaSun",
+                text: "Samba rhythms echoing down the beach boulevard in Rio! Energy is contagious 🎉",
+                category: "Music",
+                lat: -22.9068,
+                lng: -43.1729,
+                locationName: "Rio de Janeiro, Brazil",
+                timestamp: "3 hours ago"
+            },
+            {
+                id: "seed-8",
+                author: "NileWatcher",
+                text: "Historic evening exploring Khan el-Khalili market in Cairo. Amazing spices and tea.",
+                category: "Event",
+                lat: 30.0444,
+                lng: 31.2357,
+                locationName: "Cairo, Egypt",
+                timestamp: "4 hours ago"
+            },
+            {
+                id: "seed-9",
+                author: "CanalCruiser",
+                text: "Cycling along the Prinsengracht canal. Stopping by a cozy coffee shop for stroopwafels.",
+                category: "Food",
+                lat: 52.3676,
+                lng: 4.9041,
+                locationName: "Amsterdam, Netherlands",
+                timestamp: "5 hours ago"
+            },
+            {
+                id: "seed-10",
+                author: "SiliconDev",
+                text: "Just released a new open source AI project on GitHub! Excited to see community contributions. 🚀",
+                category: "Tech",
+                lat: 37.7749,
+                lng: -122.4194,
+                locationName: "San Francisco, USA",
+                timestamp: "6 hours ago"
+            },
+            {
+                id: "seed-11",
+                author: "HwangNamRunner",
+                text: "Night stroll through Hongdae street performance zone. Incredible live indie bands! 🎸",
+                category: "Music",
+                lat: 37.5665,
+                lng: 126.9780,
+                locationName: "Seoul, South Korea",
+                timestamp: "6 hours ago"
+            },
+            {
+                id: "seed-12",
+                author: "MarinaSky",
+                text: "Stunning light show at Gardens by the Bay! Future vibes in Singapore.",
+                category: "Event",
+                lat: 1.3521,
+                lng: 103.8198,
+                locationName: "Singapore",
+                timestamp: "7 hours ago"
+            },
+            {
+                id: "seed-13",
+                author: "AlpineSeeker",
+                text: "Breathtaking mountain view from Zurich Lake. Crisp autumn air and total peace.",
+                category: "Life",
+                lat: 47.3769,
+                lng: 8.5417,
+                locationName: "Zurich, Switzerland",
+                timestamp: "8 hours ago"
+            },
+            {
+                id: "seed-14",
+                author: "BantuBeat",
+                text: "Tech meetup in Nairobi iHub! Inspiring innovations emerging across East Africa. 💡",
+                category: "Tech",
+                lat: -1.2921,
+                lng: 36.8219,
+                locationName: "Nairobi, Kenya",
+                timestamp: "9 hours ago"
+            },
+            {
+                id: "seed-15",
+                author: "TacoEnthusiast",
+                text: "Authentic street tacos in Coyoacán with spicy salsa verde! Pure culinary happiness 🌮",
+                category: "Food",
+                lat: 19.4326,
+                lng: -99.1332,
+                locationName: "Mexico City, Mexico",
+                timestamp: "10 hours ago"
+            }
+        ];
+
+        // Initialize Application
+        document.addEventListener("DOMContentLoaded", () => {
+            loadPostsFromStorage();
+            initWorldMap();
+            initPickerMap();
+            setupEventListeners();
+            renderPostsFeed(postsData);
+            updatePulseCountDisplay();
+        });
+
+        // Load Posts from LocalStorage (or seed defaults)
+        function loadPostsFromStorage() {
+            const stored = localStorage.getItem("pulsemap_posts");
+            if (stored) {
+                try {
+                    postsData = JSON.parse(stored);
+                } catch(e) {
+                    postsData = seedPulses;
+                }
+            } else {
+                postsData = seedPulses;
+                localStorage.setItem("pulsemap_posts", JSON.stringify(postsData));
+            }
+        }
+
+        function savePostsToStorage() {
+            localStorage.setItem("pulsemap_posts", JSON.stringify(postsData));
+        }
+
+        // View Switching Logic (Search vs Post)
+        function switchView(viewName) {
+            const searchPanel = document.getElementById("view-search");
+            const postPanel = document.getElementById("view-post");
+            const tabSearch = document.getElementById("tab-search");
+            const tabPost = document.getElementById("tab-post");
+            const cardSearch = document.getElementById("card-search-option");
+            const cardPost = document.getElementById("card-post-option");
+            const mobSearch = document.getElementById("mob-nav-search");
+            const mobPost = document.getElementById("mob-nav-post");
+            const mobFeed = document.getElementById("mob-nav-feed");
+
+            if (viewName === "search") {
+                searchPanel.classList.add("active");
+                postPanel.classList.remove("active");
+                tabSearch.classList.add("active");
+                tabPost.classList.remove("active");
+                cardSearch.classList.add("active-card");
+                cardPost.classList.remove("active-card");
+
+                if (mobSearch) mobSearch.classList.add("active");
+                if (mobPost) mobPost.classList.remove("active");
+                if (mobFeed) mobFeed.classList.remove("active");
+
+                setTimeout(() => {
+                    if (worldMap) worldMap.invalidateSize();
+                }, 200);
+            } else {
+                postPanel.classList.add("active");
+                searchPanel.classList.remove("active");
+                tabPost.classList.add("active");
+                tabSearch.classList.remove("active");
+                cardPost.classList.add("active-card");
+                cardSearch.classList.remove("active-card");
+
+                if (mobPost) mobPost.classList.add("active");
+                if (mobSearch) mobSearch.classList.remove("active");
+                if (mobFeed) mobFeed.classList.remove("active");
+
+                setTimeout(() => {
+                    if (pickerMap) pickerMap.invalidateSize();
+                }, 200);
+            }
+        }
+
+        function scrollToFeed() {
+            switchView('search');
+            const mobFeed = document.getElementById("mob-nav-feed");
+            const mobSearch = document.getElementById("mob-nav-search");
+            if (mobFeed) mobFeed.classList.add("active");
+            if (mobSearch) mobSearch.classList.remove("active");
+
+            const feedContainer = document.querySelector(".feed-container");
+            if (feedContainer) {
+                feedContainer.scrollIntoView({ behavior: 'smooth' });
+            }
+        }
+
+        // Initialize World Map (Search Mode)
+        function initWorldMap() {
+            // CartoDB Dark Matter Tile Layer
+            worldMap = L.map('world-map', {
+                center: [20, 0],
+                zoom: 2,
+                minZoom: 2,
+                zoomControl: true
+            });
+
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/">CARTO</a>',
+                subdomains: 'abcd',
+                maxZoom: 19
+            }).addTo(worldMap);
+
+            updateWorldMapMarkers(postsData);
+        }
+
+        // Create Custom Pulsing Green Dot Marker Icon
+        function createGreenPulseIcon() {
+            return L.divIcon({
+                className: 'green-pulse-marker',
+                html: `<div class="green-pulse-dot"></div>`,
+                iconSize: [24, 24],
+                iconAnchor: [12, 12]
+            });
+        }
+
+        // Update Markers on World Map based on filtered posts
+        function updateWorldMapMarkers(filteredPosts, searchQuery = "") {
+            // Clear existing markers
+            worldMarkers.forEach(m => worldMap.removeLayer(m));
+            worldMarkers = [];
+
+            filteredPosts.forEach(post => {
+                const marker = L.marker([post.lat, post.lng], {
+                    icon: createGreenPulseIcon()
+                }).addTo(worldMap);
+
+                // Highlight searched text inside popup
+                let displayText = escapeHtml(post.text);
+                if (searchQuery.trim().length > 0) {
+                    const regex = new RegExp(`(${escapeRegExp(searchQuery)})`, 'gi');
+                    displayText = displayText.replace(regex, '<mark>$1</mark>');
+                }
+
+                const popupHtml = `
+                    <div class="popup-card">
+                        <div class="popup-meta">
+                            <span class="popup-author"><i class="fa-solid fa-user-astronaut"></i> ${escapeHtml(post.author)}</span>
+                            <span>${escapeHtml(post.timestamp)}</span>
+                        </div>
+                        <div class="popup-text">${displayText}</div>
+                        <div class="popup-location">
+                            <i class="fa-solid fa-location-dot" style="color: var(--primary-green);"></i>
+                            ${escapeHtml(post.locationName)}
+                        </div>
+                    </div>
+                `;
+
+                marker.bindPopup(popupHtml);
+                worldMarkers.push(marker);
+            });
+
+            // Update match indicator pill text
+            const matchPill = document.getElementById("match-count-indicator");
+            if (searchQuery.trim().length > 0) {
+                matchPill.textContent = `Found ${filteredPosts.length} matching locations for "${searchQuery}"`;
+            } else {
+                matchPill.textContent = `Showing all ${filteredPosts.length} global locations`;
+            }
+        }
+
+        // Reset World Map Zoom
+        function resetWorldMapZoom() {
+            if (worldMap) {
+                worldMap.setView([20, 0], 2);
+            }
+        }
+
+        // Initialize Location Picker Map (Post Mode)
+        function initPickerMap() {
+            pickerMap = L.map('picker-map', {
+                center: [selectedLocation.lat, selectedLocation.lng],
+                zoom: 4,
+                zoomControl: true
+            });
+
+            L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+                attribution: '&copy; CARTO',
+                subdomains: 'abcd',
+                maxZoom: 19
+            }).addTo(pickerMap);
+
+            // Initial marker position
+            pickerMarker = L.marker([selectedLocation.lat, selectedLocation.lng], {
+                icon: createGreenPulseIcon(),
+                draggable: true
+            }).addTo(pickerMap);
+
+            // Event: Click map to place marker
+            pickerMap.on('click', (e) => {
+                updatePickerLocation(e.latlng.lat, e.latlng.lng);
+            });
+
+            // Event: Drag marker
+            pickerMarker.on('dragend', (e) => {
+                const pos = pickerMarker.getLatLng();
+                updatePickerLocation(pos.lat, pos.lng);
+            });
+
+            updateLocationDisplay(selectedLocation.name, selectedLocation.lat, selectedLocation.lng);
+        }
+
+        // Update Picker Location State & reverse geocode name
+        function updatePickerLocation(lat, lng, knownName = null) {
+            selectedLocation.lat = parseFloat(lat.toFixed(4));
+            selectedLocation.lng = parseFloat(lng.toFixed(4));
+
+            if (pickerMarker) {
+                pickerMarker.setLatLng([selectedLocation.lat, selectedLocation.lng]);
+            }
+            if (pickerMap) {
+                pickerMap.panTo([selectedLocation.lat, selectedLocation.lng]);
+            }
+
+            if (knownName) {
+                selectedLocation.name = knownName;
+                updateLocationDisplay(knownName, selectedLocation.lat, selectedLocation.lng);
+            } else {
+                // Reverse Geocode lookup using Nominatim
+                updateLocationDisplay("Fetching location name...", selectedLocation.lat, selectedLocation.lng);
+                fetch(`https://nominatim.openstreetmap.org/reverse?format=json&lat=${selectedLocation.lat}&lon=${selectedLocation.lng}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        let placeName = "Custom Location";
+                        if (data && data.address) {
+                            const city = data.address.city || data.address.town || data.address.village || data.address.county || "";
+                            const country = data.address.country || "";
+                            placeName = city ? `${city}, ${country}` : (country || "Ocean / Remote Area");
+                        }
+                        selectedLocation.name = placeName;
+                        updateLocationDisplay(placeName, selectedLocation.lat, selectedLocation.lng);
+                    })
+                    .catch(() => {
+                        selectedLocation.name = `Location (${selectedLocation.lat}, ${selectedLocation.lng})`;
+                        updateLocationDisplay(selectedLocation.name, selectedLocation.lat, selectedLocation.lng);
+                    });
+            }
+        }
+
+        function updateLocationDisplay(name, lat, lng) {
+            const display = document.getElementById("selected-loc-display");
+            display.textContent = `${name} (${lat}, ${lng})`;
+        }
+
+        // Quick Preset Location Selection
+        function selectPresetLoc(name, lat, lng) {
+            updatePickerLocation(lat, lng, name);
+        }
+
+        // Detect User Browser Geolocation
+        function detectUserGeoLocation() {
+            if ("geolocation" in navigator) {
+                updateLocationDisplay("Detecting current position...", 0, 0);
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        updatePickerLocation(position.coords.latitude, position.coords.longitude);
+                        showToast("Location detected successfully!");
+                    },
+                    (error) => {
+                        showToast("Failed to detect location. Please click on map.");
+                        updateLocationDisplay(selectedLocation.name, selectedLocation.lat, selectedLocation.lng);
+                    }
+                );
+            } else {
+                showToast("Geolocation not supported by browser.");
+            }
+        }
+
+        // Setup Event Listeners
+        function setupEventListeners() {
+            // Search Input Event
+            const searchInput = document.getElementById("search-input");
+            const clearBtn = document.getElementById("clear-search-btn");
+
+            searchInput.addEventListener("input", (e) => {
+                const query = e.target.value;
+                clearBtn.style.display = query.length > 0 ? "block" : "none";
+                filterAndRenderPosts(query);
+            });
+
+            // Character Counter & Text Area
+            const textarea = document.getElementById("post-text");
+            const charCount = document.getElementById("char-count");
+            textarea.addEventListener("input", (e) => {
+                const len = e.target.value.length;
+                charCount.textContent = `${len} / 280`;
+            });
+
+            // Tagselector chips
+            const tagSelector = document.getElementById("tag-selector");
+            tagSelector.addEventListener("click", (e) => {
+                if (e.target.classList.contains("tag-chip")) {
+                    document.querySelectorAll(".tag-chip").forEach(c => c.classList.remove("selected"));
+                    e.target.classList.add("selected");
+                    activeCategoryTag = e.target.getAttribute("data-tag") || "General";
+                }
+            });
+        }
+
+        // Filter Posts by Keyword Search
+        function filterAndRenderPosts(query) {
+            const q = query.trim().toLowerCase();
+            let filtered = postsData;
+
+            if (q.length > 0) {
+                filtered = postsData.filter(p => 
+                    p.text.toLowerCase().includes(q) || 
+                    p.author.toLowerCase().includes(q) ||
+                    p.locationName.toLowerCase().includes(q) ||
+                    p.category.toLowerCase().includes(q)
+                );
+            }
+
+            updateWorldMapMarkers(filtered, q);
+            renderPostsFeed(filtered, q);
+        }
+
+        // Search Chips helper
+        function setSearchQuery(keyword) {
+            const searchInput = document.getElementById("search-input");
+            const clearBtn = document.getElementById("clear-search-btn");
+            searchInput.value = keyword;
+            clearBtn.style.display = keyword.length > 0 ? "block" : "none";
+            filterAndRenderPosts(keyword);
+
+            // Highlight chip UI
+            document.querySelectorAll(".kw-chip").forEach(chip => {
+                if (chip.textContent.includes(keyword) && keyword !== "") {
+                    chip.classList.add("active-chip");
+                } else {
+                    chip.classList.remove("active-chip");
+                }
+            });
+        }
+
+        function clearSearch() {
+            setSearchQuery("");
+        }
+
+        // Render Posts Feed Cards Below Map
+        function renderPostsFeed(posts, searchQuery = "") {
+            const container = document.getElementById("posts-grid");
+            const countDisplay = document.getElementById("feed-count");
+            container.innerHTML = "";
+            countDisplay.textContent = `${posts.length} posts`;
+
+            if (posts.length === 0) {
+                container.innerHTML = `
+                    <div style="grid-column: 1 / -1; text-align: center; padding: 3rem; color: var(--text-muted);">
+                        <i class="fa-solid fa-ghost" style="font-size: 2rem; margin-bottom: 0.8rem; color: var(--primary-green);"></i>
+                        <p>No matching global pulses found. Try searching another keyword or post a new pulse!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            posts.forEach(post => {
+                const card = document.createElement("div");
+                card.className = "post-card";
+
+                const rawText = post.text || post.content || "";
+                let contentHtml = escapeHtml(rawText).replace(/\n/g, '<br>');
+                if (searchQuery.trim().length > 0) {
+                    const regex = new RegExp(`(${escapeRegExp(searchQuery)})`, 'gi');
+                    contentHtml = contentHtml.replace(regex, '<mark style="background: rgba(0,255,136,0.3); color:#fff; padding:0.1rem 0.3rem; border-radius:4px;">$1</mark>');
+                }
+
+                card.innerHTML = `
+                    <div class="post-card-top">
+                        <span class="post-card-author"><i class="fa-solid fa-user-astronaut"></i> ${escapeHtml(post.author)}</span>
+                        <span class="post-card-tag">${escapeHtml(post.category)}</span>
+                    </div>
+                    <div class="post-card-content">${contentHtml}</div>
+                    <div class="post-card-bottom">
+                        <span><i class="fa-solid fa-location-dot" style="color: var(--primary-green);"></i> ${escapeHtml(post.locationName)}</span>
+                        <button class="btn-fly-to" onclick="flyToLocation(${post.lat}, ${post.lng}, '${post.id}')">
+                            <i class="fa-solid fa-crosshairs"></i> View on Map
+                        </button>
+                    </div>
+                `;
+
+                container.appendChild(card);
+            });
+        }
+
+        // Fly to location on world map and open marker popup
+        function flyToLocation(lat, lng, postId) {
+            switchView('search');
+            if (worldMap) {
+                worldMap.flyTo([lat, lng], 8, {
+                    animate: true,
+                    duration: 1.5
+                });
+
+                // Find matching marker and open popup
+                const targetMarker = worldMarkers.find(m => {
+                    const pos = m.getLatLng();
+                    return Math.abs(pos.lat - lat) < 0.001 && Math.abs(pos.lng - lng) < 0.001;
+                });
+
+                if (targetMarker) {
+                    setTimeout(() => {
+                        targetMarker.openPopup();
+                    }, 1600);
+                }
+            }
+        }
+
+        // Submit New Pulse Post Action
+        function submitPulsePost() {
+            const authorInput = document.getElementById("author-name");
+            const textarea = document.getElementById("post-text");
+
+            const author = authorInput.value.trim() || "Anonymous Voyager";
+            const text = textarea.value.trim();
+
+            if (!text) {
+                showToast("Please enter some text for your post!");
+                textarea.focus();
+                return;
+            }
+
+            // Create new post item
+            const newPulse = {
+                id: "pulse-" + Date.now(),
+                author: author,
+                text: text,
+                category: activeCategoryTag,
+                lat: selectedLocation.lat,
+                lng: selectedLocation.lng,
+                locationName: selectedLocation.name,
+                timestamp: "Just now"
+            };
+
+            // Prepend to posts state & save
+            postsData.unshift(newPulse);
+            savePostsToStorage();
+
+            // Reset form
+            textarea.value = "";
+            document.getElementById("char-count").textContent = "0 / 280";
+
+            // Update UI & displays
+            updatePulseCountDisplay();
+            filterAndRenderPosts("");
+
+            showToast("Pulse published to world map!");
+
+            // Switch to world map view and zoom to newly created post!
+            setTimeout(() => {
+                flyToLocation(newPulse.lat, newPulse.lng, newPulse.id);
+            }, 800);
+        }
+
+        function updatePulseCountDisplay() {
+            document.getElementById("pulse-count").textContent = postsData.length;
+        }
+
+        // Toast Notification System
+        function showToast(msg) {
+            const toast = document.getElementById("toast-notification");
+            const toastMsg = document.getElementById("toast-message");
+            toastMsg.textContent = msg;
+            toast.classList.add("show");
+
+            setTimeout(() => {
+                toast.classList.remove("show");
+            }, 3000);
+        }
+
+        // Utility: Sanitization
+        function escapeHtml(str) {
+            if (str === null || str === undefined) return "";
+            return String(str).replace(/[&<>"']/g, function (m) {
+                return {
+                    '&': '&amp;',
+                    '<': '&lt;',
+                    '>': '&gt;',
+                    '"': '&quot;',
+                    "'": '&#039;'
+                }[m];
+            });
+        }
+
+        function escapeRegExp(string) {
+            return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        }
+    </script>
+</body>
+</html>
