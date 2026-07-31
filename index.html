@@ -653,6 +653,14 @@
             font-weight: 600;
         }
 
+        .pill-short-text {
+            display: none;
+        }
+
+        .pill-full-text {
+            display: inline;
+        }
+
         .map-controls {
             display: flex;
             gap: 0.5rem;
@@ -1160,13 +1168,37 @@
             }
 
             .match-count-pill {
-                font-size: 0.7rem;
-                padding: 0.25rem 0.65rem;
+                font-size: 0.78rem;
+                padding: 0.35rem 0.65rem;
+                display: inline-flex;
+                align-items: center;
+            }
+
+            .pill-full-text {
+                display: none !important;
+            }
+
+            .pill-short-text {
+                display: inline-flex !important;
+                align-items: center;
+                gap: 0.35rem;
+                font-weight: 700;
+                font-size: 0.82rem;
             }
 
             .btn-map-control {
-                padding: 0.4rem 0.75rem;
-                font-size: 0.75rem;
+                width: 38px;
+                height: 38px;
+                padding: 0 !important;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 0.95rem;
+                border-radius: var(--radius-sm);
+            }
+
+            .btn-map-control .btn-text {
+                display: none !important;
             }
 
             .world-map-box {
@@ -1417,11 +1449,14 @@
                     <div class="map-header-bar">
                         <div class="map-title-info">
                             <h2><i class="fa-solid fa-earth-americas" style="color: var(--primary-green);"></i> Interactive World Map</h2>
-                            <span class="match-count-pill" id="match-count-indicator">Showing all locations</span>
+                            <span class="match-count-pill" id="match-count-indicator">
+                                <span class="pill-full-text">Showing all locations</span>
+                                <span class="pill-short-text"><i class="fa-solid fa-earth-americas"></i> 0</span>
+                            </span>
                         </div>
                         <div class="map-controls">
-                            <button class="btn-map-control" onclick="resetWorldMapZoom()">
-                                <i class="fa-solid fa-compress"></i> Reset View
+                            <button class="btn-map-control" onclick="resetWorldMapZoom()" title="Reset View">
+                                <i class="fa-solid fa-compress"></i><span class="btn-text"> Reset View</span>
                             </button>
                         </div>
                     </div>
@@ -1877,9 +1912,15 @@
             // Update match indicator pill text
             const matchPill = document.getElementById("match-count-indicator");
             if (searchQuery.trim().length > 0) {
-                matchPill.textContent = `Found ${filteredPosts.length} matching locations for "${searchQuery}"`;
+                matchPill.innerHTML = `
+                    <span class="pill-full-text">Found ${filteredPosts.length} matching locations for "${escapeHtml(searchQuery)}"</span>
+                    <span class="pill-short-text"><i class="fa-solid fa-location-dot"></i> ${filteredPosts.length}</span>
+                `;
             } else {
-                matchPill.textContent = `Showing all ${filteredPosts.length} global locations`;
+                matchPill.innerHTML = `
+                    <span class="pill-full-text">Showing all ${filteredPosts.length} global locations</span>
+                    <span class="pill-short-text"><i class="fa-solid fa-earth-americas"></i> ${filteredPosts.length}</span>
+                `;
             }
         }
 
