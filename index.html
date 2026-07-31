@@ -989,114 +989,342 @@
 
 
 
-        /* Responsive Mobile Breakpoints */
+        /* Comprehensive Mobile-Oriented Responsive Breakpoints */
         @media (max-width: 768px) {
+            html, body {
+                overflow-x: hidden;
+                width: 100%;
+            }
+
             body {
-                padding-bottom: 70px;
+                padding-bottom: 75px;
             }
 
             header {
-                padding: 0.75rem 1rem;
+                padding: 0.65rem 0.85rem;
             }
 
             .header-container {
                 justify-content: space-between;
+                gap: 0.5rem;
+            }
+
+            .brand {
+                gap: 0.6rem;
+            }
+
+            .brand-logo {
+                width: 34px;
+                height: 34px;
+                min-width: 34px;
+                font-size: 1.05rem;
+            }
+
+            .brand-title {
+                font-size: 1.25rem;
+            }
+
+            .stats-badge {
+                padding: 0.35rem 0.65rem;
+                font-size: 0.72rem;
+                border-radius: 9999px;
             }
 
             .mode-switcher {
-                display: none; /* Replaced by bottom nav on mobile */
+                display: none; /* Handled by bottom navigation bar on mobile screens */
             }
 
             .mobile-bottom-nav {
                 display: flex;
+                z-index: 9999;
             }
 
             main {
-                padding: 1rem 0.85rem 5rem 0.85rem;
-                gap: 1.25rem;
-            }
-
-            .center-options-hero {
-                grid-template-columns: 1fr;
+                padding: 0.75rem 0.75rem 5.5rem 0.75rem;
                 gap: 0.85rem;
             }
 
+            /* Compact Mobile Segment Control for Feature Options */
+            .center-options-hero {
+                grid-template-columns: 1fr 1fr;
+                gap: 0.5rem;
+            }
+
             .option-card {
-                padding: 1.1rem 1.25rem;
-                gap: 1rem;
+                padding: 0.65rem 0.75rem;
+                gap: 0.6rem;
+                border-radius: var(--radius-md);
+                align-items: center;
             }
 
             .option-icon {
-                width: 44px;
-                height: 44px;
-                min-width: 44px;
-                font-size: 1.2rem;
+                width: 34px;
+                height: 34px;
+                min-width: 34px;
+                font-size: 0.95rem;
+                border-radius: 8px;
             }
 
             .option-info h3 {
-                font-size: 1.05rem;
+                font-size: 0.8rem;
+                line-height: 1.25;
+                font-weight: 600;
             }
 
             .option-info p {
-                font-size: 0.8rem;
+                display: none; /* Hide detailed paragraph text on small screens for a clean app feel */
             }
 
-            .post-creation-wrapper {
-                grid-template-columns: 1fr;
-                padding: 1.25rem;
-                gap: 1.5rem;
+            /* Search Panel Wrapper on Mobile */
+            .search-panel-wrapper {
+                gap: 0.85rem;
             }
 
-            /* Prevent iOS Safari auto-zoom on input focus */
+            .search-bar-container {
+                padding: 0.85rem 0.95rem;
+                border-radius: var(--radius-md);
+            }
+
+            .search-input-box {
+                margin-bottom: 0.6rem;
+            }
+
+            .search-icon {
+                left: 0.85rem;
+                font-size: 0.95rem;
+            }
+
+            /* Prevent auto-zoom on iOS Safari when tapping inputs */
             .author-input, .post-textarea, .search-input {
                 font-size: 16px !important;
             }
 
-            .search-bar-container {
-                padding: 1.1rem;
+            .search-input {
+                padding: 0.75rem 2.6rem 0.75rem 2.4rem;
+                height: 44px;
+                border-radius: var(--radius-md);
             }
 
-            .search-input {
-                padding: 0.85rem 3rem 0.85rem 2.8rem;
+            .clear-search-btn {
+                right: 0.6rem;
+                width: 34px;
+                height: 34px;
             }
 
             .keyword-chips-container, .quick-locations {
                 overflow-x: auto;
                 white-space: nowrap;
                 flex-wrap: nowrap;
-                padding-bottom: 4px;
+                padding: 0.2rem 0 0.4rem 0;
                 -webkit-overflow-scrolling: touch;
                 scrollbar-width: none;
+                gap: 0.4rem;
+                mask-image: linear-gradient(to right, black 85%, transparent 100%);
+                -webkit-mask-image: linear-gradient(to right, black 85%, transparent 100%);
             }
 
             .keyword-chips-container::-webkit-scrollbar, .quick-locations::-webkit-scrollbar {
                 display: none;
             }
 
-            .kw-chip, .loc-preset-btn {
-                flex-shrink: 0;
+            .chips-label {
+                font-size: 0.72rem;
+                margin-right: 0.2rem;
             }
 
-            .world-map-wrapper {
+            .kw-chip, .loc-preset-btn {
+                flex-shrink: 0;
+                padding: 0.4rem 0.75rem;
+                font-size: 0.76rem;
+                min-height: 34px;
+                border-radius: 9999px;
+            }
+
+            /* Mobile World & Picker Map Wrappers */
+            .world-map-wrapper, .post-creation-wrapper {
                 padding: 0.85rem;
+                border-radius: var(--radius-md);
+            }
+
+            .post-creation-wrapper {
+                grid-template-columns: 1fr;
+                gap: 1.25rem;
+            }
+
+            .map-header-bar {
+                margin-bottom: 0.6rem;
+            }
+
+            .map-title-info h2 {
+                font-size: 1rem;
+            }
+
+            .match-count-pill {
+                font-size: 0.7rem;
+                padding: 0.25rem 0.65rem;
+            }
+
+            .btn-map-control {
+                padding: 0.4rem 0.75rem;
+                font-size: 0.75rem;
             }
 
             .world-map-box {
-                height: 380px;
+                height: 340px;
+                border-radius: var(--radius-sm);
             }
 
             .picker-map-box {
-                height: 240px;
+                height: 220px;
+                border-radius: var(--radius-sm);
+            }
+
+            /* Touch Friendly Leaflet Controls */
+            .leaflet-control-zoom a {
+                width: 36px !important;
+                height: 36px !important;
+                line-height: 36px !important;
+                font-size: 16px !important;
+            }
+
+            /* Feed Grid & Post Cards on Mobile */
+            .feed-container {
+                gap: 0.75rem;
+            }
+
+            .feed-header {
+                font-size: 0.95rem;
             }
 
             .posts-grid {
                 grid-template-columns: 1fr;
+                gap: 0.75rem;
+            }
+
+            .post-card {
+                padding: 0.95rem 1rem;
+                border-radius: var(--radius-md);
+            }
+
+            .post-card-header {
+                margin-bottom: 0.6rem;
+            }
+
+            .author-badge {
+                font-size: 0.85rem;
+            }
+
+            .post-content {
+                font-size: 0.9rem;
+                line-height: 1.5;
+                margin-bottom: 0.75rem;
+            }
+
+            .post-card-footer {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 0.6rem;
+            }
+
+            .location-tag {
+                font-size: 0.78rem;
+            }
+
+            .btn-fly-location {
+                width: 100%;
+                justify-content: center;
+                padding: 0.65rem 1rem;
+                font-size: 0.82rem;
+                min-height: 42px;
+                border-radius: var(--radius-sm);
+            }
+
+            /* Form Elements on Mobile */
+            .section-header h2 {
+                font-size: 1.15rem;
+            }
+
+            .section-header p {
+                font-size: 0.8rem;
+            }
+
+            .input-group {
+                margin-bottom: 0.85rem;
+            }
+
+            .tag-selector {
+                gap: 0.4rem;
+            }
+
+            .tag-chip {
+                padding: 0.45rem 0.8rem;
+                font-size: 0.78rem;
+                min-height: 38px;
+                border-radius: 9999px;
+            }
+
+            .btn-submit-post {
+                width: 100%;
+                height: 48px;
+                font-size: 0.95rem;
+                border-radius: var(--radius-md);
+            }
+
+            .location-status-bar {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 0.65rem;
+                padding: 0.75rem 0.85rem;
+            }
+
+            .location-info {
+                font-size: 0.8rem;
+            }
+
+            .btn-detect {
+                width: 100%;
+                justify-content: center;
+                height: 40px;
+                font-size: 0.82rem;
             }
 
             .toast {
-                left: 1rem;
-                right: 1rem;
-                bottom: 5rem;
+                left: 0.85rem;
+                right: 0.85rem;
+                bottom: 5.2rem;
+                padding: 0.85rem 1.1rem;
+                font-size: 0.88rem;
+                border-radius: var(--radius-md);
+            }
+        }
+
+        @media (max-width: 480px) {
+            header {
+                padding: 0.55rem 0.65rem;
+            }
+
+            .brand-title {
+                font-size: 1.1rem;
+            }
+
+            .stats-badge span {
+                display: inline-block;
+            }
+
+            .option-card {
+                padding: 0.55rem 0.6rem;
+            }
+
+            .option-info h3 {
+                font-size: 0.75rem;
+            }
+
+            .world-map-box {
+                height: 300px;
+            }
+
+            .picker-map-box {
+                height: 200px;
             }
         }
     </style>
@@ -1325,10 +1553,7 @@
         </button>
     </nav>
 
-    <!-- Footer -->
-    <footer>
-        <p>PulseMap &copy; 2026 — Real-Time Anonymous Global Thought & Location Visualizer</p>
-    </footer>
+
 
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
