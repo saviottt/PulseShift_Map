@@ -20,11 +20,21 @@
     <!-- Leaflet CSS -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
 
+    <!-- Three.js (Layer 4 WebGL 3D Physical Liquid Glass Lens) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
     <style>
         :root {
+            /* Design Tokens (design.md Section 2.1) */
+            --glass-surface-base: rgba(19, 22, 28, 0.85);
+            --glass-surface-accent: rgba(28, 32, 39, 0.90);
+            --glass-border: rgba(255, 255, 255, 0.12);
+            --glass-frost: 0;
+            --glass-saturation: 1;
+
             --bg-dark: #090d16;
-            --bg-card: rgba(18, 26, 43, 0.75);
-            --bg-card-border: rgba(255, 255, 255, 0.08);
+            --bg-card: var(--glass-surface-base);
+            --bg-card-border: var(--glass-border);
             --primary-green: #00ff88;
             --primary-green-glow: rgba(0, 255, 136, 0.35);
             --primary-green-dark: #00b359;
@@ -34,9 +44,53 @@
             --text-muted: #9ca3af;
             --font-heading: 'Outfit', sans-serif;
             --font-body: 'Inter', sans-serif;
-            --radius-lg: 18px;
-            --radius-md: 12px;
-            --radius-sm: 8px;
+            --radius-lg: 1.5rem;
+            --radius-md: 1rem;
+            --radius-sm: 0.5rem;
+        }
+
+        /* -------------------------------------------------------------
+         * Framework-Agnostic CSS Utility Classes (design.md Section 2.2)
+         * ------------------------------------------------------------- */
+
+        /* 1. GLASS PANEL */
+        .glass-panel {
+            backdrop-filter: blur(16px) saturate(180%);
+            -webkit-backdrop-filter: blur(16px) saturate(180%);
+            background: var(--glass-surface-base);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-lg);
+            box-shadow: 
+                inset 1px 1px 0.5px 0 rgba(255, 255, 255, 0.15),
+                inset -1px -1px 0.5px 0 rgba(255, 255, 255, 0.05),
+                0 8px 32px 0 rgba(0, 0, 0, 0.25);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* 2. GLASS PILL / CAPSULE */
+        .glass-pill {
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            background: var(--glass-surface-accent);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            border-radius: 9999px;
+            box-shadow: 
+                inset 1px 1px 0.5px 0 rgba(255, 255, 255, 0.5),
+                inset -1px -1px 0.5px 0 rgba(0, 0, 0, 0.15),
+                0 4px 12px rgba(0, 0, 0, 0.08);
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* 3. ACTIVE HIGHLIGHT GLASS CAPSULE */
+        .glass-active-capsule {
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            background-color: rgba(255, 255, 255, 0.18);
+            border: 1px solid rgba(255, 255, 255, 0.20);
+            box-shadow: 
+                inset 1px 1px 1px 0 rgba(255, 255, 255, 0.40),
+                0 2px 8px 0 rgba(0, 0, 0, 0.20);
+            border-radius: 9999px;
         }
 
         * {
@@ -71,7 +125,7 @@
             background: rgba(9, 13, 22, 0.85);
             backdrop-filter: blur(16px);
             -webkit-backdrop-filter: blur(16px);
-            border-bottom: 1px solid var(--bg-card-border);
+            border-bottom: 1px solid var(--glass-border);
             padding: 1rem 2rem;
         }
 
@@ -116,13 +170,13 @@
             color: var(--primary-green);
         }
 
-        /* Top Central Switcher Tabs */
+        /* Top Central Switcher Tabs (Desktop) */
         .mode-switcher {
             display: flex;
             background: rgba(255, 255, 255, 0.05);
             padding: 4px;
             border-radius: 40px;
-            border: 1px solid var(--bg-card-border);
+            border: 1px solid var(--glass-border);
             gap: 4px;
         }
 
@@ -157,7 +211,7 @@
             border: 1px solid rgba(0, 255, 136, 0.2);
             color: var(--primary-green);
             padding: 0.35rem 0.85rem;
-            border-radius: 20px;
+            border-radius: 9999px;
             font-size: 0.82rem;
             font-weight: 600;
             display: flex;
@@ -165,7 +219,7 @@
             gap: 0.4rem;
         }
 
-        /* Main Workspace Container */
+        /* Main Workspace Container (Spacious Desktop Layout) */
         main {
             flex: 1;
             max-width: 1300px;
@@ -177,33 +231,36 @@
             gap: 2rem;
         }
 
-        /* Center Hero Navigation / Quick Select Cards */
+        /* Hero Feature Options (Desktop Grid) */
         .center-options-hero {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 1.5rem;
             margin-bottom: 0.5rem;
-        }
-
-        @media (max-width: 850px) {
-            .center-options-hero {
-                grid-template-columns: 1fr;
-            }
+            background: transparent;
+            padding: 0;
+            border: none;
+            border-radius: 0;
+            backdrop-filter: none;
         }
 
         .option-card {
-            background: var(--bg-card);
-            border: 1px solid var(--bg-card-border);
-            backdrop-filter: blur(12px);
+            background: var(--glass-surface-base);
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
             border-radius: var(--radius-lg);
             padding: 1.5rem 1.75rem;
             cursor: pointer;
-            transition: all 0.3s ease;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
             position: relative;
             overflow: hidden;
             display: flex;
             align-items: center;
             gap: 1.25rem;
+            box-shadow: 
+                inset 1px 1px 0.5px 0 rgba(255, 255, 255, 0.15),
+                0 8px 32px 0 rgba(0, 0, 0, 0.25);
         }
 
         .option-card::before {
@@ -238,7 +295,7 @@
             min-width: 54px;
             border-radius: 16px;
             background: rgba(255, 255, 255, 0.04);
-            border: 1px solid var(--bg-card-border);
+            border: 1px solid var(--glass-border);
             display: flex;
             align-items: center;
             justify-content: center;
@@ -260,7 +317,16 @@
             margin-bottom: 0.3rem;
         }
 
+        .desktop-text {
+            display: inline;
+        }
+
+        .mobile-text {
+            display: none;
+        }
+
         .option-info p {
+            display: block;
             font-size: 0.88rem;
             color: var(--text-muted);
             line-height: 1.4;
@@ -485,14 +551,20 @@
             border-color: rgba(255, 255, 255, 0.2);
         }
 
+        .post-submit-container {
+            grid-column: 1 / -1;
+            margin-top: 0.75rem;
+        }
+
         .btn-submit-post {
+            width: 100%;
             background: linear-gradient(135deg, var(--primary-green), var(--primary-green-dark));
             border: none;
             color: #04140c;
             font-family: var(--font-heading);
             font-size: 1.05rem;
             font-weight: 700;
-            padding: 0.9rem 1.5rem;
+            padding: 1rem 1.5rem;
             border-radius: var(--radius-md);
             cursor: pointer;
             transition: all 0.3s ease;
@@ -501,7 +573,6 @@
             justify-content: center;
             gap: 0.6rem;
             box-shadow: 0 4px 20px var(--primary-green-glow);
-            margin-top: 0.5rem;
         }
 
         .btn-submit-post:hover {
@@ -934,18 +1005,24 @@
         .mobile-bottom-nav {
             display: none;
             position: fixed;
-            bottom: 0;
-            left: 0;
-            right: 0;
-            height: 64px;
-            background: rgba(9, 13, 22, 0.95);
-            backdrop-filter: blur(20px);
-            -webkit-backdrop-filter: blur(20px);
-            border-top: 1px solid var(--bg-card-border);
-            z-index: 2000;
+            bottom: 0.75rem;
+            left: 0.75rem;
+            right: 0.75rem;
+            max-width: 500px;
+            margin: 0 auto;
+            height: 60px;
+            background: rgba(13, 17, 24, 0.92);
+            backdrop-filter: blur(24px) saturate(180%);
+            -webkit-backdrop-filter: blur(24px) saturate(180%);
+            border: 1px solid var(--glass-border);
+            border-radius: 9999px;
+            box-shadow: 
+                inset 1px 1px 0.5px 0 rgba(255, 255, 255, 0.2),
+                0 10px 30px rgba(0, 0, 0, 0.5);
+            z-index: 9999;
             justify-content: space-around;
             align-items: center;
-            padding-bottom: env(safe-area-inset-bottom);
+            padding: 0 0.5rem;
         }
 
         .mobile-nav-item {
@@ -955,17 +1032,18 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 3px;
-            font-size: 0.72rem;
+            justify-content: center;
+            gap: 2px;
+            font-size: 0.7rem;
             font-weight: 600;
             cursor: pointer;
             transition: all 0.2s ease;
             flex: 1;
-            padding: 6px 0;
+            padding: 4px 0;
         }
 
         .mobile-nav-item i {
-            font-size: 1.25rem;
+            font-size: 1.2rem;
         }
 
         .mobile-nav-item.active {
@@ -973,17 +1051,17 @@
         }
 
         .mobile-nav-item.fab-item .fab-icon {
-            width: 46px;
-            height: 46px;
+            width: 44px;
+            height: 44px;
             border-radius: 50%;
             background: linear-gradient(135deg, var(--primary-green), var(--primary-green-dark));
             color: #04140c;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-top: -20px;
-            box-shadow: 0 4px 15px var(--primary-green-glow);
-            border: 3px solid var(--bg-dark);
+            margin-top: -18px;
+            box-shadow: 0 4px 20px var(--primary-green-glow);
+            border: 2px solid var(--bg-dark);
             transition: transform 0.2s ease;
         }
 
@@ -992,7 +1070,7 @@
         }
 
         .mobile-nav-item.fab-item i {
-            font-size: 1.2rem;
+            font-size: 1.15rem;
         }
 
 
@@ -1052,35 +1130,206 @@
                 gap: 0.85rem;
             }
 
-            /* Compact Mobile Segment Control for Feature Options */
+            /* Hide redundant top switcher on mobile (managed by bottom nav bar) */
             .center-options-hero {
-                grid-template-columns: 1fr 1fr;
-                gap: 0.5rem;
+                display: none !important;
             }
 
-            .option-card {
-                padding: 0.65rem 0.75rem;
-                gap: 0.6rem;
+            /* Mobile World & Picker Map Wrappers */
+            .world-map-wrapper {
+                padding: 0.85rem;
                 border-radius: var(--radius-md);
-                align-items: center;
             }
 
-            .option-icon {
-                width: 34px;
-                height: 34px;
-                min-width: 34px;
+            .post-creation-wrapper {
+                grid-template-columns: 1fr;
+                gap: 0.65rem;
+                padding: 0;
+                background: transparent;
+                border: none;
+                box-shadow: none;
+                backdrop-filter: none;
+                margin-bottom: 5.5rem;
+            }
+
+            .post-form-section, .location-picker-section {
+                background: var(--glass-surface-base);
+                border: 1px solid var(--glass-border);
+                backdrop-filter: blur(16px);
+                -webkit-backdrop-filter: blur(16px);
+                border-radius: var(--radius-md);
+                padding: 0.85rem 0.9rem;
+            }
+
+            .post-form-section {
+                gap: 0.7rem;
+            }
+
+            .location-picker-section {
+                gap: 0.6rem;
+            }
+
+            /* Compact section headers - icon + title only */
+            .section-header {
+                margin-bottom: 0;
+            }
+
+            .section-header h2 {
                 font-size: 0.95rem;
+                gap: 0.4rem;
+            }
+
+            .section-header h2 i {
+                font-size: 0.85rem;
+            }
+
+            .section-header p {
+                display: none !important;
+            }
+
+            /* Compact form fields */
+            .input-group {
+                margin-bottom: 0 !important;
+                gap: 0.3rem !important;
+            }
+
+            .input-label {
+                font-size: 0.75rem !important;
+                font-weight: 600;
+                color: var(--text-muted);
+                letter-spacing: 0.02em;
+            }
+
+            /* Prevent auto-zoom on iOS Safari when tapping inputs */
+            .author-input, .post-textarea, .search-input {
+                font-size: 16px !important;
+            }
+
+            .author-input {
+                padding: 0.55rem 0.75rem !important;
+                border-radius: 10px !important;
+                background: rgba(9, 13, 22, 0.5) !important;
+                border: 1px solid rgba(255,255,255,0.06) !important;
+            }
+
+            .post-textarea {
+                min-height: 72px !important;
+                max-height: 110px !important;
+                padding: 0.55rem 0.75rem !important;
+                border-radius: 10px !important;
+                background: rgba(9, 13, 22, 0.5) !important;
+                border: 1px solid rgba(255,255,255,0.06) !important;
+                line-height: 1.4 !important;
+                resize: none !important;
+            }
+
+            /* Horizontal scrolling category chips */
+            .tag-selector {
+                display: flex;
+                flex-wrap: nowrap;
+                overflow-x: auto;
+                white-space: nowrap;
+                padding: 0.15rem 0 0.3rem 0;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none;
+                gap: 0.35rem;
+                mask-image: linear-gradient(to right, black 90%, transparent 100%);
+                -webkit-mask-image: linear-gradient(to right, black 90%, transparent 100%);
+            }
+
+            .tag-selector::-webkit-scrollbar {
+                display: none;
+            }
+
+            .tag-chip {
+                flex-shrink: 0;
+                padding: 0.35rem 0.7rem;
+                font-size: 0.72rem;
+                min-height: 32px;
+                border-radius: 9999px;
+            }
+
+            /* Compact location picker map */
+            .picker-map-box {
+                height: 160px;
+                border-radius: 10px;
+            }
+
+            /* Inline location status bar */
+            .location-status-bar {
+                flex-direction: row !important;
+                align-items: center !important;
+                gap: 0.5rem !important;
+                padding: 0.45rem 0.65rem !important;
+                border-radius: 10px !important;
+                background: rgba(9, 13, 22, 0.5) !important;
+                border: 1px solid rgba(255,255,255,0.06) !important;
+            }
+
+            .location-info {
+                font-size: 0.72rem;
+                gap: 0.4rem;
+                flex: 1;
+                min-width: 0;
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+
+            .location-info span {
+                overflow: hidden;
+                text-overflow: ellipsis;
+                white-space: nowrap;
+            }
+
+            .btn-detect {
+                flex-shrink: 0;
+                padding: 0.35rem 0.65rem;
+                height: 32px;
+                font-size: 0.72rem;
                 border-radius: 8px;
             }
 
-            .option-info h3 {
-                font-size: 0.8rem;
-                line-height: 1.25;
-                font-weight: 600;
+            /* Horizontally scrollable preset city pills */
+            .quick-locations {
+                overflow-x: auto;
+                white-space: nowrap;
+                flex-wrap: nowrap;
+                padding: 0.1rem 0 0.2rem 0;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none;
+                gap: 0.35rem;
             }
 
-            .option-info p {
-                display: none; /* Hide detailed paragraph text on small screens for a clean app feel */
+            .quick-locations::-webkit-scrollbar {
+                display: none;
+            }
+
+            .quick-locations span {
+                font-size: 0.7rem;
+                flex-shrink: 0;
+            }
+
+            .loc-preset-btn {
+                flex-shrink: 0;
+                padding: 0.3rem 0.6rem;
+                font-size: 0.7rem;
+                min-height: 28px;
+                border-radius: 9999px;
+            }
+
+            /* Full-width CTA button */
+            .post-submit-container {
+                margin-top: 0.25rem;
+            }
+
+            .btn-submit-post {
+                width: 100%;
+                height: 48px;
+                font-size: 0.92rem;
+                font-weight: 700;
+                border-radius: 12px;
+                box-shadow: 0 4px 20px var(--primary-green-glow);
             }
 
             /* Search Panel Wrapper on Mobile */
@@ -1102,11 +1351,6 @@
                 font-size: 0.95rem;
             }
 
-            /* Prevent auto-zoom on iOS Safari when tapping inputs */
-            .author-input, .post-textarea, .search-input {
-                font-size: 16px !important;
-            }
-
             .search-input {
                 padding: 0.75rem 2.6rem 0.75rem 2.4rem;
                 height: 44px;
@@ -1119,7 +1363,7 @@
                 height: 34px;
             }
 
-            .keyword-chips-container, .quick-locations {
+            .keyword-chips-container {
                 overflow-x: auto;
                 white-space: nowrap;
                 flex-wrap: nowrap;
@@ -1131,7 +1375,7 @@
                 -webkit-mask-image: linear-gradient(to right, black 85%, transparent 100%);
             }
 
-            .keyword-chips-container::-webkit-scrollbar, .quick-locations::-webkit-scrollbar {
+            .keyword-chips-container::-webkit-scrollbar {
                 display: none;
             }
 
@@ -1140,7 +1384,7 @@
                 margin-right: 0.2rem;
             }
 
-            .kw-chip, .loc-preset-btn {
+            .kw-chip {
                 flex-shrink: 0;
                 padding: 0.4rem 0.75rem;
                 font-size: 0.76rem;
@@ -1148,17 +1392,7 @@
                 border-radius: 9999px;
             }
 
-            /* Mobile World & Picker Map Wrappers */
-            .world-map-wrapper, .post-creation-wrapper {
-                padding: 0.85rem;
-                border-radius: var(--radius-md);
-            }
-
-            .post-creation-wrapper {
-                grid-template-columns: 1fr;
-                gap: 1.25rem;
-            }
-
+            /* Map & Controls */
             .map-header-bar {
                 margin-bottom: 0.6rem;
             }
@@ -1203,11 +1437,6 @@
 
             .world-map-box {
                 height: 340px;
-                border-radius: var(--radius-sm);
-            }
-
-            .picker-map-box {
-                height: 220px;
                 border-radius: var(--radius-sm);
             }
 
@@ -1271,55 +1500,6 @@
                 border-radius: var(--radius-sm);
             }
 
-            /* Form Elements on Mobile */
-            .section-header h2 {
-                font-size: 1.15rem;
-            }
-
-            .section-header p {
-                font-size: 0.8rem;
-            }
-
-            .input-group {
-                margin-bottom: 0.85rem;
-            }
-
-            .tag-selector {
-                gap: 0.4rem;
-            }
-
-            .tag-chip {
-                padding: 0.45rem 0.8rem;
-                font-size: 0.78rem;
-                min-height: 38px;
-                border-radius: 9999px;
-            }
-
-            .btn-submit-post {
-                width: 100%;
-                height: 48px;
-                font-size: 0.95rem;
-                border-radius: var(--radius-md);
-            }
-
-            .location-status-bar {
-                flex-direction: column;
-                align-items: stretch;
-                gap: 0.65rem;
-                padding: 0.75rem 0.85rem;
-            }
-
-            .location-info {
-                font-size: 0.8rem;
-            }
-
-            .btn-detect {
-                width: 100%;
-                justify-content: center;
-                height: 40px;
-                font-size: 0.82rem;
-            }
-
             .toast {
                 left: 0.85rem;
                 right: 0.85rem;
@@ -1363,19 +1543,35 @@
 </head>
 <body>
 
+    <!-- Layer 4: WebGL 3D Physical Liquid Glass Lens Background Canvas (design.md Section 3.3) -->
+    <div id="glass-lens-canvas-container" style="position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden;"></div>
+
+    <!-- Layer 3: Dynamic Scroll Liquid Ripple Distortion SVG Filter (design.md Section 3.2) -->
+    <svg class="fixed pointer-events-none w-0 h-0" aria-hidden="true" style="position: fixed; width: 0; height: 0; pointer-events: none; opacity: 0;">
+      <defs>
+        <filter id="container-glass" x="0%" y="0%" width="100%" height="100%" color-interpolation-filters="sRGB">
+          <feTurbulence id="liquid-turbulence" type="fractalNoise" baseFrequency="0.05 0.05" numOctaves="1" seed="1" result="turbulence" />
+          <feGaussianBlur id="liquid-noise-blur" in="turbulence" stdDeviation="2" result="blurredNoise" />
+          <feDisplacementMap id="liquid-displacement" in="SourceGraphic" in2="blurredNoise" scale="0" xChannelSelector="R" yChannelSelector="B" result="displaced" />
+          <feGaussianBlur in="displaced" stdDeviation="4" result="finalBlur" />
+          <feComposite in="finalBlur" in2="finalBlur" operator="over" />
+        </filter>
+      </defs>
+    </svg>
+
     <!-- Header Navigation -->
-    <header>
+    <header class="glass-panel">
         <div class="header-container">
             <a href="#" class="brand">
-                <div class="brand-logo">
+                <div class="brand-logo glass-pill">
                     <i class="fa-solid fa-location-dot"></i>
                 </div>
                 <div class="brand-title">Pulse<span>Map</span></div>
             </a>
 
             <!-- Mode Switcher Pill Tabs -->
-            <div class="mode-switcher">
-                <button class="switch-btn active" id="tab-search" onclick="switchView('search')">
+            <div class="mode-switcher glass-pill">
+                <button class="switch-btn active glass-active-capsule" id="tab-search" onclick="switchView('search')">
                     <i class="fa-solid fa-magnifying-glass"></i> Search & World Map
                 </button>
                 <button class="switch-btn" id="tab-post" onclick="switchView('post')">
@@ -1383,7 +1579,7 @@
                 </button>
             </div>
 
-            <div class="stats-badge" id="total-pulses-badge">
+            <div class="stats-badge glass-pill" id="total-pulses-badge">
                 <i class="fa-solid fa-bolt"></i> <span id="pulse-count">0</span> Global Pulses
             </div>
         </div>
@@ -1392,26 +1588,30 @@
     <!-- Main Workspace -->
     <main>
 
-
-
         <!-- Center Options Feature Hero Banner -->
         <section class="center-options-hero">
-            <div class="option-card active-card" id="card-search-option" onclick="switchView('search')">
-                <div class="option-icon">
+            <div class="option-card active-card glass-panel" id="card-search-option" onclick="switchView('search')">
+                <div class="option-icon glass-pill">
                     <i class="fa-solid fa-globe"></i>
                 </div>
                 <div class="option-info">
-                    <h3>Option 1: Search & Green Dot Map</h3>
+                    <h3>
+                        <span class="desktop-text">Option 1: Search & Green Dot Map</span>
+                        <span class="mobile-text"><i class="fa-solid fa-magnifying-glass"></i> Search Map</span>
+                    </h3>
                     <p>Search any word or keyword to instantly locate user posts matching your query displayed as glowing green dots across the world map.</p>
                 </div>
             </div>
 
-            <div class="option-card" id="card-post-option" onclick="switchView('post')">
-                <div class="option-icon">
+            <div class="option-card glass-panel" id="card-post-option" onclick="switchView('post')">
+                <div class="option-icon glass-pill">
                     <i class="fa-solid fa-map-pin"></i>
                 </div>
                 <div class="option-info">
-                    <h3>Option 2: Post Text + Location Picker</h3>
+                    <h3>
+                        <span class="desktop-text">Option 2: Post Text + Location Picker</span>
+                        <span class="mobile-text"><i class="fa-solid fa-pen-to-square"></i> Create Pulse</span>
+                    </h3>
                     <p>Share a thought or post anonymously with zero authentication. Pin your exact location on the interactive map and broadcast to the world.</p>
                 </div>
             </div>
@@ -1422,7 +1622,7 @@
             <div class="search-panel-wrapper">
                 
                 <!-- Central Search Bar Component -->
-                <div class="search-bar-container">
+                <div class="search-bar-container glass-panel">
                     <div class="search-input-box">
                         <i class="fa-solid fa-magnifying-glass search-icon"></i>
                         <input type="text" id="search-input" class="search-input" placeholder="Search keywords in global posts... (e.g. coffee, code, music, food, tech, sunset)" autocomplete="off">
@@ -1434,28 +1634,28 @@
                     <!-- Quick Tag Chips -->
                     <div class="keyword-chips-container">
                         <span class="chips-label">Popular queries:</span>
-                        <button class="kw-chip" onclick="setSearchQuery('coffee')">☕ coffee</button>
-                        <button class="kw-chip" onclick="setSearchQuery('code')">💻 code</button>
-                        <button class="kw-chip" onclick="setSearchQuery('music')">🎵 music</button>
-                        <button class="kw-chip" onclick="setSearchQuery('peace')">🕊️ peace</button>
-                        <button class="kw-chip" onclick="setSearchQuery('tech')">🚀 tech</button>
-                        <button class="kw-chip" onclick="setSearchQuery('sunset')">🌅 sunset</button>
-                        <button class="kw-chip" onclick="setSearchQuery('')">✨ Show All</button>
+                        <button class="kw-chip glass-pill" onclick="setSearchQuery('coffee')">☕ coffee</button>
+                        <button class="kw-chip glass-pill" onclick="setSearchQuery('code')">💻 code</button>
+                        <button class="kw-chip glass-pill" onclick="setSearchQuery('music')">🎵 music</button>
+                        <button class="kw-chip glass-pill" onclick="setSearchQuery('peace')">🕊️ peace</button>
+                        <button class="kw-chip glass-pill" onclick="setSearchQuery('tech')">🚀 tech</button>
+                        <button class="kw-chip glass-pill" onclick="setSearchQuery('sunset')">🌅 sunset</button>
+                        <button class="kw-chip glass-pill" onclick="setSearchQuery('')">✨ Show All</button>
                     </div>
                 </div>
 
                 <!-- World Map Component -->
-                <div class="world-map-wrapper">
+                <div class="world-map-wrapper glass-panel">
                     <div class="map-header-bar">
                         <div class="map-title-info">
                             <h2><i class="fa-solid fa-earth-americas" style="color: var(--primary-green);"></i> Interactive World Map</h2>
-                            <span class="match-count-pill" id="match-count-indicator">
+                            <span class="match-count-pill glass-pill" id="match-count-indicator">
                                 <span class="pill-full-text">Showing all locations</span>
                                 <span class="pill-short-text"><i class="fa-solid fa-earth-americas"></i> 0</span>
                             </span>
                         </div>
                         <div class="map-controls">
-                            <button class="btn-map-control" onclick="resetWorldMapZoom()" title="Reset View">
+                            <button class="btn-map-control glass-pill" onclick="resetWorldMapZoom()" title="Reset View">
                                 <i class="fa-solid fa-compress"></i><span class="btn-text"> Reset View</span>
                             </button>
                         </div>
@@ -1482,7 +1682,7 @@
 
         <!-- VIEW PANEL 2: Text Box Post Creation + Location Picker Map -->
         <section class="view-panel" id="view-post">
-            <div class="post-creation-wrapper">
+            <div class="post-creation-wrapper glass-panel">
                 
                 <!-- Left: Post Form -->
                 <div class="post-form-section">
@@ -1511,18 +1711,14 @@
                     <div class="input-group">
                         <label class="input-label">Select Category</label>
                         <div class="tag-selector" id="tag-selector">
-                            <span class="tag-chip selected" data-tag="General">💭 General</span>
-                            <span class="tag-chip" data-tag="Tech">💻 Tech & Code</span>
-                            <span class="tag-chip" data-tag="Life">☕ Daily Life</span>
-                            <span class="tag-chip" data-tag="Music">🎵 Music</span>
-                            <span class="tag-chip" data-tag="Food">🍜 Food</span>
-                            <span class="tag-chip" data-tag="Event">🎉 Local Event</span>
+                            <span class="tag-chip selected glass-pill" data-tag="General">💭 General</span>
+                            <span class="tag-chip glass-pill" data-tag="Tech">💻 Tech & Code</span>
+                            <span class="tag-chip glass-pill" data-tag="Life">☕ Daily Life</span>
+                            <span class="tag-chip glass-pill" data-tag="Music">🎵 Music</span>
+                            <span class="tag-chip glass-pill" data-tag="Food">🍜 Food</span>
+                            <span class="tag-chip glass-pill" data-tag="Event">🎉 Local Event</span>
                         </div>
                     </div>
-
-                    <button class="btn-submit-post" onclick="submitPulsePost()">
-                        <i class="fa-solid fa-paper-plane"></i> Publish Pulse to Map
-                    </button>
                 </div>
 
                 <!-- Right: Location Picker Map -->
@@ -1537,12 +1733,12 @@
                     </div>
 
                     <!-- Selected Location Bar -->
-                    <div class="location-status-bar">
+                    <div class="location-status-bar glass-panel">
                         <div class="location-info">
                             <i class="fa-solid fa-location-dot"></i>
                             <span id="selected-loc-display">Location: Pick on map below</span>
                         </div>
-                        <button class="btn-detect" onclick="detectUserGeoLocation()">
+                        <button class="btn-detect glass-pill" onclick="detectUserGeoLocation()">
                             <i class="fa-solid fa-location-arrow"></i> My Location
                         </button>
                     </div>
@@ -1550,13 +1746,20 @@
                     <!-- Quick Preset Cities -->
                     <div class="quick-locations">
                         <span>Presets:</span>
-                        <button class="loc-preset-btn" onclick="selectPresetLoc('Tokyo', 35.6762, 139.6503)">Tokyo</button>
-                        <button class="loc-preset-btn" onclick="selectPresetLoc('New York', 40.7128, -74.0060)">New York</button>
-                        <button class="loc-preset-btn" onclick="selectPresetLoc('London', 51.5074, -0.1278)">London</button>
-                        <button class="loc-preset-btn" onclick="selectPresetLoc('Paris', 48.8566, 2.3522)">Paris</button>
-                        <button class="loc-preset-btn" onclick="selectPresetLoc('Sydney', -33.8688, 151.2093)">Sydney</button>
-                        <button class="loc-preset-btn" onclick="selectPresetLoc('Mumbai', 19.0760, 72.8777)">Mumbai</button>
+                        <button class="loc-preset-btn glass-pill" onclick="selectPresetLoc('Tokyo', 35.6762, 139.6503)">Tokyo</button>
+                        <button class="loc-preset-btn glass-pill" onclick="selectPresetLoc('New York', 40.7128, -74.0060)">New York</button>
+                        <button class="loc-preset-btn glass-pill" onclick="selectPresetLoc('London', 51.5074, -0.1278)">London</button>
+                        <button class="loc-preset-btn glass-pill" onclick="selectPresetLoc('Paris', 48.8566, 2.3522)">Paris</button>
+                        <button class="loc-preset-btn glass-pill" onclick="selectPresetLoc('Sydney', -33.8688, 151.2093)">Sydney</button>
+                        <button class="loc-preset-btn glass-pill" onclick="selectPresetLoc('Mumbai', 19.0760, 72.8777)">Mumbai</button>
                     </div>
+                </div>
+
+                <!-- Full-Width Submit Action CTA -->
+                <div class="post-submit-container">
+                    <button class="btn-submit-post" onclick="submitPulsePost()">
+                        <i class="fa-solid fa-paper-plane"></i> Publish Pulse to Map
+                    </button>
                 </div>
 
             </div>
@@ -1565,13 +1768,13 @@
     </main>
 
     <!-- Toast Notification Popup -->
-    <div class="toast" id="toast-notification">
+    <div class="toast glass-panel" id="toast-notification">
         <i class="fa-solid fa-circle-check toast-icon"></i>
         <span id="toast-message">Pulse published successfully!</span>
     </div>
 
     <!-- Mobile Fixed Bottom App Bar -->
-    <nav class="mobile-bottom-nav">
+    <nav class="mobile-bottom-nav glass-panel">
         <button class="mobile-nav-item active" id="mob-nav-search" onclick="switchView('search')">
             <i class="fa-solid fa-map-location-dot"></i>
             <span>Search Map</span>
@@ -2121,7 +2324,7 @@
 
             posts.forEach(post => {
                 const card = document.createElement("div");
-                card.className = "post-card";
+                card.className = "post-card glass-panel";
 
                 const rawText = post.text || post.content || "";
                 let contentHtml = escapeHtml(rawText).replace(/\n/g, '<br>');
@@ -2133,12 +2336,12 @@
                 card.innerHTML = `
                     <div class="post-card-top">
                         <span class="post-card-author"><i class="fa-solid fa-user-astronaut"></i> ${escapeHtml(post.author)}</span>
-                        <span class="post-card-tag">${escapeHtml(post.category)}</span>
+                        <span class="post-card-tag glass-pill">${escapeHtml(post.category)}</span>
                     </div>
                     <div class="post-card-content">${contentHtml}</div>
                     <div class="post-card-bottom">
                         <span><i class="fa-solid fa-location-dot" style="color: var(--primary-green);"></i> ${escapeHtml(post.locationName)}</span>
-                        <button class="btn-fly-to" onclick="flyToLocation(${post.lat}, ${post.lng}, '${post.id}')">
+                        <button class="btn-fly-to glass-pill" onclick="flyToLocation(${post.lat}, ${post.lng}, '${post.id}')">
                             <i class="fa-solid fa-crosshairs"></i> View on Map
                         </button>
                     </div>
@@ -2250,6 +2453,118 @@
         function escapeRegExp(string) {
             return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         }
+
+        // -------------------------------------------------------------
+        // Layer 3: Dynamic Scroll Liquid Ripple Distortion (design.md Section 3.2)
+        // -------------------------------------------------------------
+        (function initScrollDistortion() {
+            let displacementEl = document.getElementById('liquid-displacement');
+            let lastScrollY = window.scrollY;
+            let velocity = 0;
+
+            window.addEventListener('scroll', () => {
+                const currentScrollY = window.scrollY;
+                const delta = currentScrollY - lastScrollY;
+                velocity = Math.min(Math.max(delta * 1.8, -80), 80);
+                lastScrollY = currentScrollY;
+            }, { passive: true });
+
+            function renderLoop() {
+                velocity *= 0.88;
+                if (displacementEl) {
+                    const scale = Math.abs(velocity);
+                    if (scale > 0.05) {
+                        displacementEl.setAttribute('scale', scale.toFixed(2));
+                    } else if (displacementEl.getAttribute('scale') !== '0') {
+                        displacementEl.setAttribute('scale', '0');
+                    }
+                }
+                requestAnimationFrame(renderLoop);
+            }
+            renderLoop();
+        })();
+
+        // -------------------------------------------------------------
+        // Layer 4: WebGL 3D Physical Liquid Glass Lens (design.md Section 3.3)
+        // -------------------------------------------------------------
+        (function init3DGlassLens() {
+            const container = document.getElementById('glass-lens-canvas-container');
+            if (!container || typeof THREE === 'undefined') return;
+
+            const scene = new THREE.Scene();
+            const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
+            camera.position.z = 9;
+
+            const renderer = new THREE.WebGLRenderer({ alpha: true, antialias: true, powerPreference: 'high-performance' });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+            container.appendChild(renderer.domElement);
+
+            const ambientLight = new THREE.AmbientLight(0xffffff, 2);
+            scene.add(ambientLight);
+
+            const dirLight1 = new THREE.DirectionalLight(0x00ff88, 3);
+            dirLight1.position.set(10, 10, 10);
+            scene.add(dirLight1);
+
+            const dirLight2 = new THREE.DirectionalLight(0x3b82f6, 2);
+            dirLight2.position.set(-10, -10, -10);
+            scene.add(dirLight2);
+
+            const pointLight = new THREE.PointLight(0xffffff, 2);
+            pointLight.position.set(0, 0, 5);
+            scene.add(pointLight);
+
+            // MeshPhysicalMaterial with IOR, transmission, roughness, and chromatic dispersion (design.md 3.3)
+            const geometry = new THREE.SphereGeometry(1.8, 64, 64);
+            const material = new THREE.MeshPhysicalMaterial({
+                transmission: 0.98,
+                opacity: 1,
+                transparent: true,
+                roughness: 0.05,
+                ior: 1.25,
+                reflectivity: 0.9,
+                clearcoat: 1,
+                clearcoatRoughness: 0.05,
+                color: new THREE.Color('#ffffff')
+            });
+
+            const lensMesh = new THREE.Mesh(geometry, material);
+            scene.add(lensMesh);
+
+            let mouseX = 0, mouseY = 0;
+            let targetX = 0, targetY = 0;
+
+            window.addEventListener('pointermove', (e) => {
+                mouseX = (e.clientX / window.innerWidth - 0.5) * 7;
+                mouseY = -(e.clientY / window.innerHeight - 0.5) * 5;
+            });
+
+            window.addEventListener('resize', () => {
+                camera.aspect = window.innerWidth / window.innerHeight;
+                camera.updateProjectionMatrix();
+                renderer.setSize(window.innerWidth, window.innerHeight);
+            });
+
+            const clock = new THREE.Clock();
+
+            function animate() {
+                requestAnimationFrame(animate);
+                const delta = clock.getDelta();
+
+                targetX += (mouseX - targetX) * 0.08;
+                targetY += (mouseY - targetY) * 0.08;
+
+                lensMesh.position.x = targetX;
+                lensMesh.position.y = targetY;
+
+                lensMesh.rotation.y += delta * 0.4;
+                lensMesh.rotation.x += delta * 0.2;
+
+                renderer.render(scene, camera);
+            }
+            animate();
+        })();
     </script>
 </body>
 </html>
